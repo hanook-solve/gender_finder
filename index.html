@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
+  <title>Gender Finder 🧬</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #8B5CF6;
+      --purple2: #A78BFA;
+      --pink: #EC4899;
+      --cyan: #22D3EE;
+      --bg: #07070D;
+      --card: #0F0F1A;
+      --border: rgba(255,255,255,0.07);
+      --text: #F1F0FF;
+      --muted: #7070A0;
+      --r: 20px;
+    }
+
+    html {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 3rem;
+    }
+
+    /* ── BLOBS ── */
+    .blobs {
+      position: fixed; inset: 0;
+      z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: 0.15;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .blob1 { width: 500px; height: 500px; background: var(--purple); top: -150px; left: -100px; }
+    .blob2 { width: 400px; height: 400px; background: var(--pink); bottom: -100px; right: -80px; animation-delay: -4s; }
+    .blob3 { width: 300px; height: 300px; background: var(--cyan); top: 40%; left: 55%; animation-delay: -8s; }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px,20px) scale(1.08); }
+    }
+
+    /* ── APP WRAPPER ── */
+    #app {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 480px;
+    }
+
+    /* ── SCREENS ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      box-shadow: 0 0 80px rgba(139,92,246,0.08), 0 0 140px rgba(236,72,153,0.05);
+    }
+
+    .card-top {
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .brand {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      background: linear-gradient(90deg, var(--purple2), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .top-pill {
+      font-size: 11px; color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 100px; padding: 4px 12px;
+    }
+    .card-bottom {
+      padding: 10px 20px;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-bottom span { font-size: 11px; color: var(--muted); }
+
+    /* ── BUTTONS ── */
+    .btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 600;
+      border: none; border-radius: 12px;
+      padding: 14px 28px;
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.15s, box-shadow 0.2s, opacity 0.15s;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-glow {
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(139,92,246,0.4);
+    }
+    .btn-glow:hover { box-shadow: 0 6px 36px rgba(139,92,246,0.6); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.09); color: var(--text); }
+    .btn.locked { opacity: 0.28; pointer-events: none; }
+
+    /* ═══════════ SCREEN 1 — INTRO ═══════════ */
+    #s-intro .body {
+      padding: 2.5rem 1.75rem 2rem;
+      text-align: center;
+    }
+    .dna-ring {
+      width: 96px; height: 96px;
+      margin: 0 auto 1.5rem;
+      position: relative;
+    }
+    .dna-ring svg { width: 100%; height: 100%; animation: spin-slow 9s linear infinite; }
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+    .dna-inner {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 34px;
+    }
+    .intro-headline {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(28px, 8vw, 40px);
+      font-weight: 800; line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+    .grad {
+      background: linear-gradient(135deg, var(--purple2), var(--pink), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .intro-sub {
+      color: var(--muted); font-size: 15px; line-height: 1.7;
+      max-width: 300px; margin: 0 auto 1.75rem;
+    }
+    .chips {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; margin-bottom: 2rem;
+    }
+    .chip {
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.22);
+      border-radius: 100px; padding: 5px 14px;
+      font-size: 12px; color: var(--purple2);
+    }
+
+    /* ═══════════ SCREEN 2 — QUIZ ═══════════ */
+    #s-quiz .body { padding: 1.75rem 1.75rem 1.5rem; }
+
+    .prog-wrap { margin-bottom: 1.5rem; }
+    .prog-meta {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: var(--muted); margin-bottom: 6px;
+    }
+    .prog-track {
+      height: 5px; background: rgba(255,255,255,0.06);
+      border-radius: 3px; overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple), var(--pink));
+      border-radius: 3px;
+      transition: width 0.5s cubic-bezier(0.34,1.2,0.64,1);
+      width: 0%;
+    }
+
+    .q-eyebrow {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--purple2); font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .q-text {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(16px, 4.5vw, 20px);
+      font-weight: 700; line-height: 1.4;
+      margin-bottom: 1.25rem; color: var(--text);
+    }
+    .opts { display: flex; flex-direction: column; gap: 9px; margin-bottom: 1.5rem; }
+    .opt {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500; color: var(--text);
+      text-align: left; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      display: flex; align-items: center; gap: 10px;
+      width: 100%;
+    }
+    .opt:hover { border-color: rgba(139,92,246,0.4); background: rgba(139,92,246,0.06); }
+    .opt.picked { border-color: var(--purple); background: rgba(139,92,246,0.12); color: var(--purple2); }
+    .dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 1.5px solid var(--border); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .opt.picked .dot { background: var(--purple); border-color: var(--purple); }
+    .opt.picked .dot::after { content:''; width:6px; height:6px; border-radius:50%; background:#fff; display:block; }
+
+    /* ═══════════ SCREEN 3 — LOADING ═══════════ */
+    #s-loading .body { padding: 3.5rem 2rem; text-align: center; }
+    .spinner-wrap {
+      width: 80px; height: 80px; margin: 0 auto 1.5rem; position: relative;
+    }
+    .ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 2px solid transparent;
+    }
+    .ring1 { border-top-color: var(--purple); animation: rspin 1.2s linear infinite; }
+    .ring2 { border-right-color: var(--pink); animation: rspin 1.8s linear infinite reverse; }
+    .ring3 { border-bottom-color: var(--cyan); animation: rspin 2.4s linear infinite; inset: 14px; }
+    @keyframes rspin { to { transform: rotate(360deg); } }
+    .load-emoji { font-size: 30px; margin-bottom: 0.75rem; animation: pulse 1s ease infinite alternate; }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.15); } }
+    .load-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px; font-weight: 700; margin-bottom: 0.4rem;
+    }
+    .load-sub { font-size: 14px; color: var(--muted); }
+
+    /* ═══════════ SCREEN 4 — RESULT ═══════════ */
+    #s-result .body { padding: 2rem 1.75rem 1.75rem; }
+
+    .result-top { text-align: center; margin-bottom: 1.75rem; }
+    .result-badge {
+      display: inline-block; font-size: 11px;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--purple2); font-weight: 600;
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.25);
+      border-radius: 100px; padding: 5px 14px; margin-bottom: 1rem;
+    }
+    .result-emoji {
+      font-size: clamp(56px, 16vw, 72px);
+      display: block; line-height: 1; margin-bottom: 0.75rem;
+      animation: pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes pop { from { transform: scale(0); opacity:0; } to { transform: scale(1); opacity:1; } }
+    .result-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(20px, 5.5vw, 26px);
+      font-weight: 800; line-height: 1.2;
+      background: linear-gradient(135deg, var(--purple2), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      margin-bottom: 0.6rem;
+    }
+    .result-desc { font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 320px; margin: 0 auto; }
+
+    .bars { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 10px; }
+    .bar-row {
+      display: flex; flex-direction: column;
+      gap: 5px;
+    }
+    .bar-meta {
+      display: flex; justify-content: space-between;
+      font-size: 12px; margin-bottom: 5px;
+    }
+    .bar-lbl { color: var(--muted); }
+    .bar-pct { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+    .bar-track { height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 1.4s cubic-bezier(0.34,1.1,0.64,1); }
+    .bar-fill.m { background: linear-gradient(90deg, var(--purple), var(--purple2)); }
+    .bar-fill.f { background: linear-gradient(90deg, var(--pink), #F9A8D4); }
+
+    .roast-box {
+      background: rgba(34,211,238,0.05);
+      border: 1px solid rgba(34,211,238,0.14);
+      border-radius: 12px; padding: 12px 16px;
+      margin-bottom: 1.25rem;
+      display: flex; align-items: flex-start; gap: 10px;
+    }
+    .roast-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+    .roast-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .roast-text strong { color: var(--cyan); font-weight: 600; }
+
+    .result-btns { display: flex; gap: 10px; }
+    .result-btns .btn { flex: 1; padding: 13px; }
+  </style>
+</head>
+<body>
+
+<div class="blobs">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+</div>
+
+<div id="app">
+
+  <!-- ════════ SCREEN 1: INTRO ════════ -->
+  <div class="screen active" id="s-intro">
+    <div class="card">
+      <div class="card-top">
+        <span class="brand">Gender Finder</span>
+        <span class="top-pill">AI Powered ✦</span>
+      </div>
+      <div class="body">
+        <div class="dna-ring">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="44" stroke="url(#ga)" stroke-width="1.5" stroke-dasharray="6 4"/>
+            <circle cx="50" cy="50" r="32" stroke="url(#gb)" stroke-width="1" stroke-dasharray="4 6"/>
+            <defs>
+              <linearGradient id="ga" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#EC4899"/>
+              </linearGradient>
+              <linearGradient id="gb" x1="100" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#22D3EE"/><stop offset="1" stop-color="#A78BFA"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="dna-inner">🧬</div>
+        </div>
+        <h1 class="intro-headline">Let Me <span class="grad">Guess!</span></h1>
+        <p class="intro-sub">7 science-backed questions. One hilariously accurate verdict. Are you ready?</p>
+        <div class="chips">
+          <span class="chip">🗿 Sigma Male?</span>
+          <span class="chip">💅 Girl Boss?</span>
+          <span class="chip">🏛️ Roman Emperor?</span>
+          <span class="chip">🤖 NPC?</span>
+        </div>
+        <button class="btn btn-glow" id="btn-start">Get Started →</button>
+      </div>
+      <div class="card-bottom">
+        <span>Gender: 2+ ∞</span>
+        <span>Takes ~1 min</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ SCREEN 2: QUIZ ════════ -->
+  <div class="screen" id="s-quiz">
+    <div class="card">
+      <div class="card-top">
+        <span class="brand">Gender Finder</span>
+        <span class="top-pill" id="q-counter">1 / 7</span>
+      </div>
+      <div class="body">
+        <div class="prog-wrap">
+          <div class="prog-meta">
+            <span id="prog-label">Question 1</span>
+            <span id="prog-pct">0%</span>
+          </div>
+          <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+        </div>
+        <p class="q-eyebrow" id="q-eyebrow">Physiology Check</p>
+        <h2 class="q-text" id="q-text"></h2>
+        <div class="opts" id="opts"></div>
+        <button class="btn btn-glow locked" id="btn-next">Next →</button>
+      </div>
+      <div class="card-bottom">
+        <span>Gender: 2+</span>
+        <span id="q-hint"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ SCREEN 3: LOADING ════════ -->
+  <div class="screen" id="s-loading">
+    <div class="card">
+      <div class="card-top">
+        <span class="brand">Gender Finder</span>
+        <span class="top-pill">Analyzing...</span>
+      </div>
+      <div class="body">
+        <div class="spinner-wrap">
+          <div class="ring ring1"></div>
+          <div class="ring ring2"></div>
+          <div class="ring ring3"></div>
+        </div>
+        <div class="load-emoji" id="load-emoji">🔬</div>
+        <h2 class="load-title">Processing your DNA...</h2>
+        <p class="load-sub" id="load-sub">Consulting the ancient scrolls</p>
+      </div>
+      <div class="card-bottom">
+        <span>Gender: 2+</span>
+        <span>Please wait</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ SCREEN 4: RESULT ════════ -->
+  <div class="screen" id="s-result">
+    <div class="card">
+      <div class="card-top">
+        <span class="brand">Gender Finder</span>
+        <span class="top-pill">Your Result ✦</span>
+      </div>
+      <div class="body">
+        <div class="result-top">
+          <span class="result-badge">You are a...</span>
+          <span class="result-emoji" id="r-emoji">🗿</span>
+          <h2 class="result-title" id="r-title"></h2>
+          <p class="result-desc" id="r-desc"></p>
+        </div>
+        <div class="bars">
+          <div class="bar-row">
+            <div class="bar-meta">
+              <span class="bar-lbl">⚡ Male energy</span>
+              <span class="bar-pct" id="pct-m">0%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill m" id="bar-m"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-meta">
+              <span class="bar-lbl">✨ Female energy</span>
+              <span class="bar-pct" id="pct-f">0%</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill f" id="bar-f"></div></div>
+          </div>
+        </div>
+        <div class="roast-box">
+          <span class="roast-icon">🤖</span>
+          <p class="roast-text" id="r-roast"><strong>AI verdict:</strong> Loading...</p>
+        </div>
+        <div class="result-btns">
+          <button class="btn btn-ghost" id="btn-retry">↩ Retry</button>
+          <button class="btn btn-glow" id="btn-share">Share 🔗</button>
+        </div>
+      </div>
+      <div class="card-bottom">
+        <span>Gender: 2+</span>
+        <span>Powered by Groq AI</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+// ── QUESTIONS ──────────────────────────────────────────────────────────────────
+const QS = [
+  { hint:"🌙 Night instincts", text:"You hear a suspicious noise at 3am. You...", opts:["Grab something and investigate immediately","Check Twitter — maybe it's breaking news","Pretend to sleep and hope it goes away","Text the group chat in all caps"] },
+  { hint:"🍟 Feeding behavior", text:"How do you eat a bag of chips?", opts:["Straight from the bag, one by one","Pour into a bowl like a civilized being","Rip it open flat and graze like a deer","I don't eat chips — I have discipline"] },
+  { hint:"🔋 Survival instincts", text:"Battery at 4%. You're outside. You...", opts:["Instant panic — sprint to find a charger","Low power mode and carry on calmly","Text everyone important, then accept fate","I carry a power bank. Rookie mistake."] },
+  { hint:"😤 Social response", text:"Someone cancels plans last minute. Real reaction?", opts:["Secretly relieved — didn't want to go anyway","Annoyed but forgiven in 5 minutes","Already making new plans before they finish","This is a personal attack. I will remember."] },
+  { hint:"🔩 Problem solving", text:"IKEA furniture. Instructions are confusing. You...", opts:["Read every step carefully from the start","Vibe off the pictures and figure it out","YouTube tutorial, immediately","Wing it, then Google why it wobbles later"] },
+  { hint:"🖥️ Mental bandwidth", text:"How many browser tabs are open right now?", opts:["1–5, I'm a focused human being","6–20, they're all important trust me","21–50, I have a system, it's fine","I lost count and made peace with it"] },
+  { hint:"🕷️ Threat response", text:"Big spider in your room at night. You...", opts:["Bare hands, toss it outside — easy","Glass trap, careful release outside","Eyes locked on it. Do not sleep.","The spider lives here now. I sleep elsewhere."] }
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────────
+let qIdx = 0, answers = [], picked = null;
+
+// ── SCREEN SWITCH ──────────────────────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── INTRO ──────────────────────────────────────────────────────────────────────
+document.getElementById('btn-start').onclick = () => {
+  qIdx = 0; answers = []; picked = null;
+  show('s-quiz'); renderQ();
+};
+
+// ── QUIZ ───────────────────────────────────────────────────────────────────────
+function renderQ() {
+  const q = QS[qIdx];
+  const pct = Math.round((qIdx / QS.length) * 100);
+  document.getElementById('q-counter').textContent = `${qIdx+1} / ${QS.length}`;
+  document.getElementById('prog-label').textContent = `Question ${qIdx+1}`;
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('q-eyebrow').textContent = q.hint;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-hint').textContent = '';
+  picked = null;
+  document.getElementById('btn-next').classList.add('locked');
+
+  const el = document.getElementById('opts');
+  el.innerHTML = '';
+  q.opts.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.innerHTML = `<span class="dot"></span><span>${o}</span>`;
+    b.onclick = () => {
+      document.querySelectorAll('.opt').forEach(x => x.classList.remove('picked'));
+      b.classList.add('picked');
+      picked = { q: q.text, a: o };
+      document.getElementById('btn-next').classList.remove('locked');
+    };
+    el.appendChild(b);
+  });
+}
+
+document.getElementById('btn-next').onclick = () => {
+  if (!picked) return;
+  answers.push(picked);
+  qIdx++;
+  if (qIdx < QS.length) {
+    renderQ();
+  } else {
+    document.getElementById('prog-fill').style.width = '100%';
+    document.getElementById('prog-pct').textContent = '100%';
+    show('s-loading');
+    startLoadingAnim();
+    callAPI();
+  }
+};
+
+// ── LOADING ANIMATION ──────────────────────────────────────────────────────────
+const loadMsgs = [
+  { e:'🔬', t:'Analyzing your brainwaves...' },
+  { e:'🧬', t:'Sequencing personality DNA...' },
+  { e:'📡', t:'Consulting the sigma council...' },
+  { e:'⚗️', t:'Running vibe spectroscopy...' },
+  { e:'🤖', t:'AI is judging you (kindly)...' },
+];
+let loadTimer;
+function startLoadingAnim() {
+  let i = 0;
+  loadTimer = setInterval(() => {
+    i = (i + 1) % loadMsgs.length;
+    document.getElementById('load-emoji').textContent = loadMsgs[i].e;
+    document.getElementById('load-sub').textContent   = loadMsgs[i].t;
+  }, 1600);
+}
+function stopLoadingAnim() { clearInterval(loadTimer); }
+
+// ── API CALL — calls your secure backend /api/result ──────────────────────────
+async function callAPI() {
+  try {
+    const res = await fetch('https://gender-finder-api.onrender.com/result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers })
+    });
+    if (!res.ok) throw new Error('API error');
+    const result = await res.json();
+    stopLoadingAnim();
+    showResult(result);
+  } catch(err) {
+    console.error(err);
+    stopLoadingAnim();
+    showResult({
+      emoji: '🤔',
+      title: 'Unclassifiable Entity',
+      description: "Our AI had an existential crisis trying to figure you out.",
+      male_pct: 50, female_pct: 50,
+      roast: "You broke the algorithm. That's your superpower."
+    });
+  }
+}
+
+// ── SHOW RESULT ────────────────────────────────────────────────────────────────
+function showResult(r) {
+  document.getElementById('r-emoji').textContent = r.emoji;
+  document.getElementById('r-title').textContent = r.title;
+  document.getElementById('r-desc').textContent  = r.description;
+  document.getElementById('r-roast').innerHTML   = `<strong>AI verdict:</strong> ${r.roast}`;
+  document.getElementById('bar-m').style.width = '0%';
+  document.getElementById('bar-f').style.width = '0%';
+  document.getElementById('pct-m').textContent = '0%';
+  document.getElementById('pct-f').textContent = '0%';
+  show('s-result');
+  setTimeout(() => {
+    const m = Math.round(r.male_pct), f = Math.round(r.female_pct);
+    document.getElementById('bar-m').style.width = m + '%';
+    document.getElementById('bar-f').style.width = f + '%';
+    document.getElementById('pct-m').textContent = m + '%';
+    document.getElementById('pct-f').textContent = f + '%';
+  }, 400);
+}
+
+// ── RETRY / SHARE ──────────────────────────────────────────────────────────────
+document.getElementById('btn-retry').onclick = () => show('s-intro');
+document.getElementById('btn-share').onclick = () => {
+  const emoji = document.getElementById('r-emoji').textContent;
+  const title = document.getElementById('r-title').textContent;
+  const m = document.getElementById('pct-m').textContent;
+  const f = document.getElementById('pct-f').textContent;
+  const text = `I took the Gender Finder quiz 🧬\nResult: ${emoji} ${title}\n⚡ ${m} Male  ✨ ${f} Female\n\nTry it yourself!`;
+  if (navigator.share) {
+    navigator.share({ title: 'Gender Finder', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      const b = document.getElementById('btn-share');
+      const orig = b.textContent;
+      b.textContent = 'Copied! ✅';
+      setTimeout(() => b.textContent = orig, 2000);
+    });
+  }
+};
+</script>
+</body>
+</html>
