@@ -275,21 +275,18 @@
     }
     .result-desc { font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 320px; margin: 0 auto; }
 
-    .bars { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 10px; }
-    .bar-row {
-      display: flex; flex-direction: column;
-      gap: 5px;
+    .energy-title {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--purple2); font-weight: 600; margin-bottom: 12px;
+      font-family: 'Syne', sans-serif;
     }
-    .bar-meta {
-      display: flex; justify-content: space-between;
-      font-size: 12px; margin-bottom: 5px;
-    }
-    .bar-lbl { color: var(--muted); }
-    .bar-pct { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
-    .bar-track { height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
-    .bar-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 1.4s cubic-bezier(0.34,1.1,0.64,1); }
-    .bar-fill.m { background: linear-gradient(90deg, var(--purple), var(--purple2)); }
-    .bar-fill.f { background: linear-gradient(90deg, var(--pink), #F9A8D4); }
+    .bars { margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 8px; }
+    .bar-row { display: flex; flex-direction: column; gap: 4px; }
+    .bar-meta { display: flex; justify-content: space-between; font-size: 12px; }
+    .bar-lbl { color: var(--muted); display: flex; align-items: center; gap: 5px; }
+    .bar-pct { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; font-size: 11px; }
+    .bar-track { height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width 1.4s cubic-bezier(0.34,1.1,0.64,1); }
 
     .roast-box {
       background: rgba(34,211,238,0.05);
@@ -421,22 +418,8 @@
           <h2 class="result-title" id="r-title"></h2>
           <p class="result-desc" id="r-desc"></p>
         </div>
-        <div class="bars">
-          <div class="bar-row">
-            <div class="bar-meta">
-              <span class="bar-lbl">⚡ Male energy</span>
-              <span class="bar-pct" id="pct-m">0%</span>
-            </div>
-            <div class="bar-track"><div class="bar-fill m" id="bar-m"></div></div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-meta">
-              <span class="bar-lbl">✨ Female energy</span>
-              <span class="bar-pct" id="pct-f">0%</span>
-            </div>
-            <div class="bar-track"><div class="bar-fill f" id="bar-f"></div></div>
-          </div>
-        </div>
+        <p class="energy-title">⚡ Your Energy Breakdown</p>
+        <div class="bars" id="energy-bars"></div>
         <div class="roast-box">
           <span class="roast-icon">🤖</span>
           <p class="roast-text" id="r-roast"><strong>AI verdict:</strong> Loading...</p>
@@ -550,7 +533,7 @@ function stopLoadingAnim() { clearInterval(loadTimer); }
 // ── API CALL — calls your secure backend /api/result ──────────────────────────
 async function callAPI() {
   try {
-    const res = await fetch('https://gender-finder-api.onrender.com/result', {
+    const res = await fetch('/api/result', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ answers })
@@ -565,12 +548,24 @@ async function callAPI() {
     showResult({
       emoji: '🤔',
       title: 'Unclassifiable Entity',
-      description: "Our AI had an existential crisis trying to figure you out.",
+      description: "Our AI had an existential crisis trying to figure you out. That's honestly impressive.",
       male_pct: 50, female_pct: 50,
       roast: "You broke the algorithm. That's your superpower."
     });
   }
 }
+
+// ── ENERGY BAR COLORS ─────────────────────────────────────────────────────────
+const ENERGY_COLORS = [
+  "linear-gradient(90deg,#8B5CF6,#A78BFA)",
+  "linear-gradient(90deg,#EC4899,#F9A8D4)",
+  "linear-gradient(90deg,#22D3EE,#67E8F9)",
+  "linear-gradient(90deg,#F59E0B,#FCD34D)",
+  "linear-gradient(90deg,#10B981,#6EE7B7)",
+  "linear-gradient(90deg,#EF4444,#FCA5A5)",
+  "linear-gradient(90deg,#6366F1,#A5B4FC)",
+  "linear-gradient(90deg,#F97316,#FDBA74)",
+];
 
 // ── SHOW RESULT ────────────────────────────────────────────────────────────────
 function showResult(r) {
@@ -578,17 +573,34 @@ function showResult(r) {
   document.getElementById('r-title').textContent = r.title;
   document.getElementById('r-desc').textContent  = r.description;
   document.getElementById('r-roast').innerHTML   = `<strong>AI verdict:</strong> ${r.roast}`;
-  document.getElementById('bar-m').style.width = '0%';
-  document.getElementById('bar-f').style.width = '0%';
-  document.getElementById('pct-m').textContent = '0%';
-  document.getElementById('pct-f').textContent = '0%';
+
+  // build energy bars
+  const barsEl = document.getElementById('energy-bars');
+  barsEl.innerHTML = '';
+  const energies = r.energies || [];
+
+  energies.forEach((e, i) => {
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `
+      <div class="bar-meta">
+        <span class="bar-lbl">${e.emoji} ${e.label}</span>
+        <span class="bar-pct" id="epct-${i}">0%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="ebar-${i}" style="background:${ENERGY_COLORS[i % ENERGY_COLORS.length]};width:0%"></div>
+      </div>`;
+    barsEl.appendChild(row);
+  });
+
   show('s-result');
+
   setTimeout(() => {
-    const m = Math.round(r.male_pct), f = Math.round(r.female_pct);
-    document.getElementById('bar-m').style.width = m + '%';
-    document.getElementById('bar-f').style.width = f + '%';
-    document.getElementById('pct-m').textContent = m + '%';
-    document.getElementById('pct-f').textContent = f + '%';
+    energies.forEach((e, i) => {
+      const pct = Math.round(e.pct);
+      document.getElementById(`ebar-${i}`).style.width = pct + '%';
+      document.getElementById(`epct-${i}`).textContent = pct + '%';
+    });
   }, 400);
 }
 
