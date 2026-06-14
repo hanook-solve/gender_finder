@@ -530,10 +530,10 @@ function startLoadingAnim() {
 }
 function stopLoadingAnim() { clearInterval(loadTimer); }
 
-// ── API CALL — calls your secure backend /api/result ──────────────────────────
+// ── API CALL — calls your secure Render backend ────────────────────────────────
 async function callAPI() {
   try {
-    const res = await fetch('https://your-render-url.onrender.com/result', {
+    const res = await fetch('https://gender-finder-api.onrender.com/result', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ answers })
@@ -548,9 +548,14 @@ async function callAPI() {
     showResult({
       emoji: '🤔',
       title: 'Unclassifiable Entity',
-      description: "Our AI had an existential crisis trying to figure you out. That's honestly impressive.",
-      male_pct: 50, female_pct: 50,
-      roast: "You broke the algorithm. That's your superpower."
+      description: "Our AI had an existential crisis trying to figure you out.",
+      roast: "You broke the algorithm. That's your superpower.",
+      energies: [
+        { emoji: "🗿", label: "Sigma", pct: 25 },
+        { emoji: "🤖", label: "NPC", pct: 25 },
+        { emoji: "🌀", label: "Chaotic Neutral", pct: 25 },
+        { emoji: "💤", label: "Background Character", pct: 25 }
+      ]
     });
   }
 }
@@ -564,7 +569,7 @@ const ENERGY_COLORS = [
   "linear-gradient(90deg,#10B981,#6EE7B7)",
   "linear-gradient(90deg,#EF4444,#FCA5A5)",
   "linear-gradient(90deg,#6366F1,#A5B4FC)",
-  "linear-gradient(90deg,#F97316,#FDBA74)",
+  "linear-gradient(90deg,#F97316,#FDBA74)"
 ];
 
 // ── SHOW RESULT ────────────────────────────────────────────────────────────────
@@ -574,7 +579,6 @@ function showResult(r) {
   document.getElementById('r-desc').textContent  = r.description;
   document.getElementById('r-roast').innerHTML   = `<strong>AI verdict:</strong> ${r.roast}`;
 
-  // build energy bars
   const barsEl = document.getElementById('energy-bars');
   barsEl.innerHTML = '';
   const energies = r.energies || [];
