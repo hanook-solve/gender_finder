@@ -533,7 +533,7 @@ function stopLoadingAnim() { clearInterval(loadTimer); }
 // ── API CALL — calls your secure backend /api/result ──────────────────────────
 async function callAPI() {
   try {
-    const res = await fetch('/api/result', {
+    const res = await fetch('https://your-render-url.onrender.com/result', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ answers })
@@ -609,9 +609,12 @@ document.getElementById('btn-retry').onclick = () => show('s-intro');
 document.getElementById('btn-share').onclick = () => {
   const emoji = document.getElementById('r-emoji').textContent;
   const title = document.getElementById('r-title').textContent;
-  const m = document.getElementById('pct-m').textContent;
-  const f = document.getElementById('pct-f').textContent;
-  const text = `I took the Gender Finder quiz 🧬\nResult: ${emoji} ${title}\n⚡ ${m} Male  ✨ ${f} Female\n\nTry it yourself!`;
+  const energyLines = Array.from(document.querySelectorAll('#energy-bars .bar-row')).map(row => {
+    const lbl = row.querySelector('.bar-lbl').textContent;
+    const pct = row.querySelector('.bar-pct').textContent;
+    return `${lbl}: ${pct}`;
+  }).join('\n');
+  const text = `I took the Gender Finder quiz 🧬\nResult: ${emoji} ${title}\n\n${energyLines}\n\nTry it yourself!`;
   if (navigator.share) {
     navigator.share({ title: 'Gender Finder', text });
   } else {
